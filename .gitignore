@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.vscode/
+
+# Kaggle dataset cache — re-downloaded automatically via kagglehub
+~/.cache/kagglehub/
