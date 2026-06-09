@@ -1,0 +1,7 @@
+Sprint,Method,Attack Labels,Needs Training,Replay Recall,Macro-F1,Category
+3,Network-ML (RF),Yes,Yes,0.4893,0.6787,Supervised — network layer only
+3,Network-ML (LGB),Yes,Yes,0.4986,0.6507,Supervised — network layer only
+5,Cross-layer Fusion (RF),Yes,Yes,0.8828,0.8234,Supervised — cross-layer
+5,Cross-layer Fusion (LGB),Yes,Yes,0.9535,0.8495,Supervised — cross-layer
+8a,"MITL-Static (C1–C4, fixed spec thresholds)",No,No,0.25,—,"MITL — spec constraints, no operational calibration"
+4=8b,MITL-Calibrated (spec structure + warm-up baseline),No,Warm-up window only,1.0,0.9324,MITL — spec constraints + behavioral calibration

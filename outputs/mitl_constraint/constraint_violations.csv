@@ -1,0 +1,58 @@
+window_bucket,constraint_id,constraint_name,severity,evidence
+1663326900,C1,saturation-bounds,definite,"level=6.7860 bounds=[2.7587,6.2515] oob=1.00"
+1663327080,C1,saturation-bounds,definite,"level=5.7433 bounds=[1.3004,5.9845] oob=0.23"
+1663327290,C1,saturation-bounds,definite,"level=5.9396 bounds=[1.0044,5.6642] oob=0.93"
+1663327500,C1,saturation-bounds,definite,"level=6.8272 bounds=[1.2548,6.9071] oob=0.36"
+1663327710,C1,saturation-bounds,definite,"level=8.5912 bounds=[4.3848,6.7751] oob=1.00"
+1663327740,C1,saturation-bounds,definite,"level=7.9067 bounds=[2.1610,6.7751] oob=1.00"
+1663327770,C1,saturation-bounds,definite,"level=7.1371 bounds=[2.1610,6.6992] oob=1.00"
+1663328130,C1,saturation-bounds,definite,"level=6.0536 bounds=[1.8105,6.2495] oob=0.13"
+1663328280,C1,saturation-bounds,definite,"level=2.9658 bounds=[3.4313,8.7447] oob=0.97"
+1663328730,C1,saturation-bounds,definite,"level=4.0007 bounds=[3.5804,6.5466] oob=0.18"
+1663328820,C1,saturation-bounds,definite,"level=7.3877 bounds=[2.9403,6.4922] oob=1.00"
+1663328850,C1,saturation-bounds,definite,"level=6.7995 bounds=[2.6144,6.4922] oob=0.89"
+1663329060,C1,saturation-bounds,definite,"level=7.4927 bounds=[3.1423,7.6931] oob=0.14"
+1663329330,C1,saturation-bounds,definite,"level=7.8790 bounds=[3.0169,7.0169] oob=1.00"
+1663329360,C1,saturation-bounds,definite,"level=7.1970 bounds=[3.0169,7.0169] oob=0.77"
+1663329570,C1,saturation-bounds,definite,"level=6.6963 bounds=[2.9109,6.9746] oob=0.19"
+1663329780,C1,saturation-bounds,definite,"level=2.8322 bounds=[2.8275,6.3605] oob=0.45"
+1663330380,C1,saturation-bounds,definite,"level=7.4654 bounds=[3.6460,7.7315] oob=0.14"
+1663330470,C1,saturation-bounds,definite,"level=5.3881 bounds=[2.9192,5.6141] oob=0.24"
+1663330680,C4,cross-layer-discrepancy,definite,net_flows=257 > 1.8×baseline=142 AND valve_stasis=True
+1663330890,C1,saturation-bounds,definite,"level=6.1410 bounds=[3.8853,5.7583] oob=1.00"
+1663331520,C1,saturation-bounds,definite,"level=7.4483 bounds=[2.6525,7.8183] oob=0.13"
+1663331580,C1,saturation-bounds,definite,"level=6.6860 bounds=[2.6525,6.2025] oob=1.00"
+1663331610,C1,saturation-bounds,definite,"level=5.9895 bounds=[4.4303,6.2025] oob=0.16"
+1663331610,C4,cross-layer-discrepancy,definite,net_flows=257 > 1.8×baseline=142 AND valve_stasis=True
+1663331700,C4,cross-layer-discrepancy,definite,net_flows=264 > 1.8×baseline=142 AND valve_stasis=True
+1663331790,C1,saturation-bounds,definite,"level=2.1439 bounds=[4.4196,7.6243] oob=1.00"
+1663331820,C1,saturation-bounds,definite,"level=3.9889 bounds=[4.4196,9.2716] oob=0.86"
+1663331910,C4,cross-layer-discrepancy,definite,net_flows=257 > 1.8×baseline=142 AND valve_stasis=True
+1663332240,C1,saturation-bounds,definite,"level=4.6181 bounds=[4.4478,6.6417] oob=0.21"
+1663332510,C1,saturation-bounds,definite,"level=5.7712 bounds=[4.3322,5.9492] oob=0.15"
+1663332630,C1,saturation-bounds,definite,"level=4.2277 bounds=[4.1685,7.2499] oob=0.23"
+1663332720,C1,saturation-bounds,definite,"level=7.1935 bounds=[2.3621,7.2499] oob=0.15"
+1663332750,C1,saturation-bounds,definite,"level=6.7849 bounds=[2.3621,5.6327] oob=1.00"
+1663332780,C1,saturation-bounds,definite,"level=6.4333 bounds=[1.4867,5.6327] oob=1.00"
+1663332780,C3,valve-cycle-invariant,definite,tank_input_valve_status(0): var=0.00e+00 < 0.05×2.30e-01 | tank_output_valve_status(5): var=0.00e+00 < 0.05×2.04e-01
+1663332810,C1,saturation-bounds,definite,"level=6.0899 bounds=[2.7583,5.6327] oob=1.00"
+1663332840,C1,saturation-bounds,definite,"level=5.4251 bounds=[2.7583,5.6327] oob=0.12"
+1663332990,C1,saturation-bounds,definite,"level=2.9835 bounds=[3.7881,7.0808] oob=0.97"
+1663333080,C4,cross-layer-discrepancy,definite,net_flows=265 > 1.8×baseline=142 AND valve_stasis=True
+1663333110,C1,saturation-bounds,definite,"level=7.6810 bounds=[1.4759,5.7763] oob=1.00"
+1663333380,C1,saturation-bounds,definite,"level=3.1467 bounds=[3.2294,7.3724] oob=0.56"
+1663333410,C4,cross-layer-discrepancy,definite,net_flows=265 > 1.8×baseline=142 AND valve_stasis=True
+1663333980,C4,cross-layer-discrepancy,definite,net_flows=266 > 1.8×baseline=142 AND valve_stasis=True
+1663334040,C1,saturation-bounds,definite,"level=6.5555 bounds=[1.4073,6.8342] oob=0.33"
+1663334070,C1,saturation-bounds,definite,"level=6.6689 bounds=[3.4329,6.8342] oob=0.15"
+1663334190,C4,cross-layer-discrepancy,definite,net_flows=264 > 1.8×baseline=142 AND valve_stasis=True
+1663334340,C4,cross-layer-discrepancy,definite,net_flows=266 > 1.8×baseline=142 AND valve_stasis=True
+1663334430,C1,saturation-bounds,definite,"level=5.9783 bounds=[2.5127,5.6865] oob=0.93"
+1663334610,C1,saturation-bounds,definite,"level=3.8993 bounds=[3.5026,8.3882] oob=0.20"
+1663334730,C1,saturation-bounds,definite,"level=7.9001 bounds=[2.0583,5.6798] oob=1.00"
+1663334760,C1,saturation-bounds,definite,"level=7.5300 bounds=[2.0583,7.4152] oob=0.99"
+1663334790,C1,saturation-bounds,definite,"level=7.0425 bounds=[2.0583,6.5844] oob=1.00"
+1663334820,C1,saturation-bounds,definite,"level=6.3216 bounds=[2.0583,6.5844] oob=0.12"
+1663335000,C1,saturation-bounds,definite,"level=6.4797 bounds=[1.3806,6.3339] oob=0.75"
+1663335030,C1,saturation-bounds,definite,"level=5.8019 bounds=[1.5451,5.8500] oob=0.39"
+1663335210,C1,saturation-bounds,definite,"level=5.5460 bounds=[1.2787,5.7125] oob=0.31"
