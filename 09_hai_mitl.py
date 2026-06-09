@@ -49,14 +49,69 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(message)s")
 log = logging.getLogger(__name__)
 
-# ── Library import (mitl package in same repo) ────────────────────────────────
+# ── Library import (mitl package) ────────────────────────────────────────────
 import sys
+import importlib.util
+
+def _find_mitl_root() -> Optional[str]:
+    """
+    Locate the directory containing the mitl/ package.
+    Works in script mode, local notebooks, and Kaggle notebooks
+    (where the repo is attached as a dataset input).
+    Returns None if mitl is already importable (pip-installed).
+    """
+    if importlib.util.find_spec("mitl") is not None:
+        return None  # already on sys.path
+
+    candidates = []
+
+    # Script mode: same directory as this file
+    try:
+        candidates.append(str(Path(__file__).parent))
+    except NameError:
+        pass
+
+    # Notebook: current working directory
+    candidates.append(str(Path.cwd()))
+
+    # Kaggle: /kaggle/input/<slug>/  and one level deeper
+    # (repo attached as dataset shows up here)
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.is_dir():
+        for entry in sorted(kaggle_input.iterdir()):
+            if entry.is_dir():
+                candidates.append(str(entry))
+                for sub in entry.iterdir():
+                    if sub.is_dir():
+                        candidates.append(str(sub))
+
+    for path in candidates:
+        if (Path(path) / "mitl" / "__init__.py").exists():
+            log.info("mitl package found at: %s", path)
+            return path
+
+    return None
+
+
+_mitl_root = _find_mitl_root()
+if _mitl_root is not None:
+    sys.path.insert(0, _mitl_root)
+    _repo_root = _mitl_root
+else:
+    try:
+        _repo_root = str(Path(__file__).parent)
+    except NameError:
+        _repo_root = str(Path.cwd())
+
 try:
-    _repo_root = str(Path(__file__).parent)
-except NameError:
-    # Jupyter / Kaggle notebook — __file__ is not defined
-    _repo_root = str(Path.cwd())
-sys.path.insert(0, _repo_root)
+    import mitl  # noqa: F401
+except ModuleNotFoundError:
+    raise ModuleNotFoundError(
+        "\n\nmitl package not found. To fix:\n"
+        "  Kaggle:  Attach the 'ics-sim-anomaly-detection' repo as a dataset,\n"
+        "           or add a cell: !pip install git+https://github.com/sassom2112/mitl.git\n"
+        "  Local:   cd /path/to/ics-sim-anomaly-detection && pip install -e .\n"
+    ) from None
 
 from mitl import (BaselineCalibrator, BehavioralBaseline, ConstraintProjector,
                   ConstraintSpec, WindowConstraintResult, etapr_report)
@@ -75,35 +130,69 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # §1  HAI DATA DETECTION & LOADING
 # ══════════════════════════════════════════════════════════════════════════════
 
-HAI_CANDIDATES = [
-    # Kaggle — specific version subdirectory (preferred — avoids mixing versions)
-    "/kaggle/input/hai-security-dataset/hai-22.04",
-    "/kaggle/input/hai-security-dataset/hai-23.05",
-    "/kaggle/input/hai-security-dataset",
-    "/kaggle/input/hai-dataset/hai-22.04",
-    "/kaggle/input/hai-dataset",
-    "/kaggle/input/hai",
-    # Local
-    "hai/hai-22.04",
-    "hai",
-    "data/hai",
-    str(Path(_repo_root) / "hai"),
-]
+def _resolve_hai_dir() -> Optional[str]:
+    """
+    Locate the HAI 22.04 directory, handling Kaggle's nested structure.
 
-HAI_DIR = next((p for p in HAI_CANDIDATES if os.path.exists(p)), None)
+    Kaggle mounts the dataset at /kaggle/input/<slug>/ which may contain
+    version subdirectories (hai-20.07, hai-21.03, hai-22.04, …).  We walk
+    up to two levels deep and pick the best versioned subdirectory.
+    """
+    roots = [
+        "/kaggle/input/hai-security-dataset",
+        "/kaggle/input/hai-dataset",
+        "/kaggle/input/hai",
+        "hai",
+        "data/hai",
+        str(Path(_repo_root) / "hai"),
+    ]
+    # Priority order for versioned subdirs (newest preferred, then any)
+    version_pref = ["hai-22.04", "hai-23.05", "hai-21.03", "hai-20.07", "haiend-23.05"]
+
+    for root in roots:
+        if not os.path.isdir(root):
+            continue
+        log.info("HAI root found: %s", root)
+
+        # Check for versioned subdirectory first (Kaggle nested structure)
+        for vname in version_pref:
+            vpath = os.path.join(root, vname)
+            if os.path.isdir(vpath):
+                csvs = list(Path(vpath).glob("*.csv"))
+                if csvs:
+                    log.info("  Using versioned subdir: %s (%d CSVs)", vpath, len(csvs))
+                    return vpath
+
+        # Fall back to root if it directly contains CSVs
+        direct_csvs = list(Path(root).glob("*.csv"))
+        if direct_csvs:
+            log.info("  Using root directly (%d CSVs)", len(direct_csvs))
+            return root
+
+        # Last resort: walk two levels for any dir containing CSVs
+        for entry in sorted(Path(root).iterdir()):
+            if entry.is_dir():
+                csvs = list(entry.glob("*.csv"))
+                if csvs:
+                    log.info("  Found CSVs in: %s (%d files)", entry, len(csvs))
+                    return str(entry)
+
+    return None
+
+
+HAI_DIR       = _resolve_hai_dir()
 HAI_AVAILABLE = HAI_DIR is not None
 
 if not HAI_AVAILABLE:
     log.warning("=" * 60)
     log.warning("  HAI dataset not found.")
-    log.warning("  Local:  git clone https://github.com/icsdataset/hai")
-    log.warning("          cd hai && git lfs pull")
+    log.warning("  Local:  git clone https://github.com/icsdataset/hai && cd hai && git lfs pull")
     log.warning("  Kaggle: attach 'hai-security-dataset' via + Add Data")
     log.warning("=" * 60)
     log.warning("Running in DEMO mode with synthetic data.")
 else:
-    log.info("HAI data found at: %s", HAI_DIR)
-    log.info("Files: %s", sorted(os.listdir(HAI_DIR))[:15])
+    log.info("HAI data dir: %s", HAI_DIR)
+    log.info("Contents: %s", sorted(os.listdir(HAI_DIR))[:20])
 
 
 def _load_hai_csv(path: str) -> pd.DataFrame:
