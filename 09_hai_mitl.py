@@ -139,9 +139,13 @@ def _resolve_hai_dir() -> Optional[str]:
     up to two levels deep and pick the best versioned subdirectory.
     """
     roots = [
+        # Kaggle standard mount
         "/kaggle/input/hai-security-dataset",
         "/kaggle/input/hai-dataset",
         "/kaggle/input/hai",
+        # Kaggle datasets/ prefix (icsdataset org slug)
+        "/kaggle/input/datasets/icsdataset/hai-security-dataset",
+        # Local
         "hai",
         "data/hai",
         str(Path(_repo_root) / "hai"),
