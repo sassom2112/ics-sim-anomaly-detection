@@ -1,13 +1,13 @@
 [build-system]
-requires      = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires      = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name        = "mitl"
 version     = "0.1.0"
 description = "Manual-in-the-Loop constraint projection for ICS anomaly detection"
 readme      = "README_mitl.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 license     = { text = "MIT" }
 authors     = [{ name = "sassom2112", email = "sassom2112@gmail.com" }]
 keywords    = ["ICS", "OT", "anomaly detection", "constraint projection",
@@ -28,6 +28,9 @@ dependencies = [
 [project.optional-dependencies]
 bedrock = ["boto3>=1.34"]
 dev     = ["pytest", "black", "ruff"]
+
+[project.scripts]
+mitl = "mitl.cli:main"
 
 [project.urls]
 Repository = "https://github.com/sassom2112/ics-sim-anomaly-detection"
