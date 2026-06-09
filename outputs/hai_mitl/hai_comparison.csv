@@ -1,0 +1,3 @@
+Method,Dataset,eTaP,eTaR,eTaPR-F1,Std-F1,Attack_Labels_Required
+Z-score (thr=5.0),DEMO,1.0,0.0,0.0,0.0,Yes
+MITL-Calibrated,DEMO,1.0,1.0,1.0,0.2128,No

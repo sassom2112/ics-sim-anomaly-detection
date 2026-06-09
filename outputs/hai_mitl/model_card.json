@@ -1,0 +1,113 @@
+{
+    "version": "1.0",
+    "script": "09_hai_mitl.py",
+    "dataset": "DEMO",
+    "demo_mode": true,
+    "spec": {
+        "name": "HAI-22.04",
+        "manual": "HAI Security Dataset Technical Manual v4.0",
+        "n_tag_specs": 19,
+        "n_loop_specs": 5,
+        "confidence": 1.0
+    },
+    "warmup": {
+        "fraction": 0.15,
+        "n_rows": 540,
+        "n_tags_calibrated": 9
+    },
+    "evaluation": {
+        "window_s": 60,
+        "etapr_buffer_s": 60,
+        "n_windows": 60,
+        "n_attack_events": 2,
+        "n_flagged": 37,
+        "flag_rate_pct": 61.67
+    },
+    "mitl_calibrated": {
+        "label": "MITL-Calibrated",
+        "n_true_events": 2,
+        "n_pred_clusters": 9,
+        "std_precision": 0.1351,
+        "std_recall": 0.5,
+        "std_f1": 0.2128,
+        "etap": 1.0,
+        "etar": 1.0,
+        "etapr_f1": 1.0,
+        "buffer_steps": 60
+    },
+    "zscore_baseline": {
+        "label": "Z-score (thr=5.0)",
+        "n_true_events": 2,
+        "n_pred_clusters": 0,
+        "std_precision": 0.0,
+        "std_recall": 0.0,
+        "std_f1": 0.0,
+        "etap": 1.0,
+        "etar": 0.0,
+        "etapr_f1": 0.0,
+        "buffer_steps": 60
+    },
+    "per_constraint": {
+        "C1": {
+            "label": "MITL-C1",
+            "n_true_events": 2,
+            "n_pred_clusters": 0,
+            "std_precision": 0.0,
+            "std_recall": 0.0,
+            "std_f1": 0.0,
+            "etap": 1.0,
+            "etar": 0.0,
+            "etapr_f1": 0.0,
+            "buffer_steps": 60
+        },
+        "C2": {
+            "label": "MITL-C2",
+            "n_true_events": 2,
+            "n_pred_clusters": 0,
+            "std_precision": 0.0,
+            "std_recall": 0.0,
+            "std_f1": 0.0,
+            "etap": 1.0,
+            "etar": 0.0,
+            "etapr_f1": 0.0,
+            "buffer_steps": 60
+        },
+        "C3": {
+            "label": "MITL-C3",
+            "n_true_events": 2,
+            "n_pred_clusters": 9,
+            "std_precision": 0.1351,
+            "std_recall": 0.5,
+            "std_f1": 0.2128,
+            "etap": 1.0,
+            "etar": 1.0,
+            "etapr_f1": 1.0,
+            "buffer_steps": 60
+        },
+        "C4": {
+            "label": "MITL-C4",
+            "n_true_events": 2,
+            "n_pred_clusters": 0,
+            "std_precision": 0.0,
+            "std_recall": 0.0,
+            "std_f1": 0.0,
+            "etap": 1.0,
+            "etar": 0.0,
+            "etapr_f1": 0.0,
+            "buffer_steps": 60
+        }
+    },
+    "icssim_comparison": {
+        "dataset": "ICSSim-v2",
+        "mitl_static_recall": 0.25,
+        "mitl_calibrated_recall": 1.0,
+        "metric": "replay recall (point-wise)"
+    },
+    "cross_dataset_summary": {
+        "ICSSim_replay_recall_mitl_calibrated": 1.0,
+        "ICSSim_replay_recall_supervised_ml": 0.4986,
+        "HAI_DEMO_mitl_calibrated_etapr_f1": 1.0,
+        "HAI_DEMO_zscore_etapr_f1": 0.0
+    },
+    "thesis": "Specification-derived constraint projection achieves detection that statistical ML misses because it enforces cross-layer structural invariants visible only in the engineering manual \u2014 not in any single data stream."
+}
