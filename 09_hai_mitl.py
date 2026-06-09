@@ -180,7 +180,7 @@ def _resolve_hai_dir() -> Optional[str]:
     return None
 
 
-HAI_DIR       = _resolve_hai_dir()
+HAI_DIR       = os.environ.get("HAI_DIR") or _resolve_hai_dir()
 HAI_AVAILABLE = HAI_DIR is not None
 
 if not HAI_AVAILABLE:
