@@ -1,4 +1,6 @@
+boto3>=1.34.0
 kagglehub==0.2.9
+lightgbm>=4.0.0
 matplotlib==3.7.5
 numpy==1.24.4
 pandas==2.0.3
