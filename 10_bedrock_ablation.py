@@ -193,7 +193,12 @@ def run_bedrock_extraction(pdf_path: str) -> "ConstraintSpec":
         raise RuntimeError("boto3 not installed — run: pip install 'mitl[bedrock]'")
 
     region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
-    client = boto3.client("bedrock-runtime", region_name=region)
+    from botocore.config import Config
+    client = boto3.client(
+        "bedrock-runtime",
+        region_name=region,
+        config=Config(read_timeout=300, connect_timeout=10),
+    )
 
     log.info("Calling Bedrock Claude for PDF extraction …")
     log.info("  PDF: %s", pdf_path)
@@ -201,7 +206,8 @@ def run_bedrock_extraction(pdf_path: str) -> "ConstraintSpec":
 
     from mitl.extract.bedrock import extract_constraint_spec
     spec = extract_constraint_spec(pdf_path, client,
-                                   model_id="anthropic.claude-sonnet-4-6")
+                                   model_id="us.anthropic.claude-sonnet-4-6",
+                                   max_tokens=65536)
     return spec
 
 

@@ -2,41 +2,77 @@
     "version": "1.0",
     "script": "10_bedrock_ablation.py",
     "eval_source": "DEMO",
-    "mock_mode": true,
+    "mock_mode": false,
     "spec_comparison": {
         "hand_n_tags": 19,
         "hand_n_loops": 5,
-        "llm_n_tags": 13,
-        "llm_n_loops": 2,
-        "tag_coverage": 0.684,
-        "n_bounds_errors": 2,
+        "llm_n_tags": 147,
+        "llm_n_loops": 7,
+        "tag_coverage": 0.842,
+        "n_bounds_errors": 5,
         "bounds_errors": {
-            "P1_FIT01": {
+            "P1_TIT01": {
+                "hand_bounds": [
+                    0.0,
+                    500.0
+                ],
+                "llm_bounds": [
+                    -50.0,
+                    150.0
+                ],
+                "err_lo": 50.0,
+                "err_hi": 350.0
+            },
+            "P4_ST_PS": {
+                "hand_bounds": [
+                    0.0,
+                    100.0
+                ],
+                "llm_bounds": [
+                    0.0,
+                    500.0
+                ],
+                "err_lo": 0.0,
+                "err_hi": 400.0
+            },
+            "P1_B3005": {
                 "hand_bounds": [
                     0.0,
                     10.0
                 ],
                 "llm_bounds": [
                     0.0,
-                    12.0
+                    2500.0
                 ],
                 "err_lo": 0.0,
-                "err_hi": 2.0
+                "err_hi": 2490.0
             },
-            "P2_RTR": {
+            "P2_SCO": {
                 "hand_bounds": [
                     0.0,
-                    2880.0
+                    100.0
                 ],
                 "llm_bounds": [
                     0.0,
-                    3000.0
+                    100000.0
                 ],
                 "err_lo": 0.0,
-                "err_hi": 120.0
+                "err_hi": 99900.0
+            },
+            "P3_LIT01": {
+                "hand_bounds": [
+                    0.0,
+                    1000.0
+                ],
+                "llm_bounds": [
+                    0.0,
+                    90.0
+                ],
+                "err_lo": 0.0,
+                "err_hi": 910.0
             }
         },
-        "rate_limiter_flags_correct": 2
+        "rate_limiter_flags_correct": 5
     },
     "run_A_hand_coded": {
         "label": "Hand-coded",
@@ -67,5 +103,5 @@
         "flag_rate": 0.6333
     },
     "etapr_f1_delta": 0.0,
-    "table3_latex": "\\midrule\nHand-coded & 19/19 & 1.00 & 1.000 & 1.000 & \\textbf{1.000} \\\\\nBedrock LLM (auto) & 13/19 & 0.68 & 1.000 & 1.000 & 1.000 \\\\\n"
+    "table3_latex": "\\midrule\nHand-coded & 19/19 & 1.00 & 1.000 & 1.000 & \\textbf{1.000} \\\\\nBedrock LLM (auto) & 16/19 & 0.84 & 1.000 & 1.000 & 1.000 \\\\\n"
 }

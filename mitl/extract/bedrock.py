@@ -81,8 +81,8 @@ Rules:
 def extract_constraint_spec(
     pdf_path: str | Path,
     bedrock_client: Any,
-    model_id: str = "anthropic.claude-sonnet-4-6",
-    max_tokens: int = 4096,
+    model_id: str = "us.anthropic.claude-sonnet-4-6",
+    max_tokens: int = 65536,
 ) -> "ConstraintSpec":  # noqa: F821 — forward ref to avoid circular import
     """
     Extract a ConstraintSpec from a PDF engineering manual via Bedrock Claude.
@@ -134,8 +134,12 @@ def extract_constraint_spec(
         contentType="application/json",
         accept="application/json",
     )
-    raw_body  = json.loads(response["body"].read())
-    llm_text  = raw_body["content"][0]["text"].strip()
+    raw_body    = json.loads(response["body"].read())
+    stop_reason = raw_body.get("stop_reason", "unknown")
+    llm_text    = raw_body["content"][0]["text"].strip()
+    log.info("Bedrock stop_reason=%s, response_chars=%d", stop_reason, len(llm_text))
+    if stop_reason == "max_tokens":
+        log.warning("Response was truncated at max_tokens=%d — increase max_tokens", max_tokens)
 
     # Strip markdown fences if present
     if llm_text.startswith("```"):
@@ -144,7 +148,21 @@ def extract_constraint_spec(
             if not line.startswith("```")
         ).strip()
 
-    data: Dict[str, Any] = json.loads(llm_text)
+    # Remove JS-style single-line comments (// ...) that Claude sometimes inserts
+    import re
+    llm_text_clean = re.sub(r'//[^\n"]*(?=\n|$)', '', llm_text)
+
+    # Try strict parse first, then fall back to extracting the outermost { } block
+    try:
+        data: Dict[str, Any] = json.loads(llm_text_clean)
+    except json.JSONDecodeError:
+        # Extract the largest balanced { ... } block from the response
+        match = re.search(r'(\{.*\})', llm_text_clean, re.DOTALL)
+        if not match:
+            log.error("LLM response (first 500 chars):\n%s", llm_text[:500])
+            raise ValueError("Could not extract valid JSON from Bedrock response")
+        data = json.loads(match.group(1))
+
     log.info("LLM returned %d tags, %d loops",
              len(data.get("tag_specs", [])),
              len(data.get("loop_specs", [])))

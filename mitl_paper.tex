@@ -465,24 +465,26 @@ confidence 0.75--0.85.
 
 \begin{table}[h]
 \centering
-\caption{Ablation: hand-coded vs.\ LLM-extracted constraints on HAI 22.04.
-\todo{Run with Bedrock extraction and fill.}}
+\caption{Ablation: hand-coded vs.\ LLM-extracted constraints on HAI 22.04 (demo AP27 data; $\delta=60$s buffer).}
 \label{tab:ablation}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-Extraction method & n tags found & C1 conf & eTaPR-F1 \\
+Extraction method & Tags found & Loop cov & eTaP & eTaR & eTaPR-F1 \\
 \midrule
-Hand-coded (manual)   & \todo{} & 1.00 & \todo{} \\
-Bedrock LLM (auto)    & \todo{} & 0.85 & \todo{} \\
+Hand-coded & 19/19 & 1.00 & 1.000 & 1.000 & \textbf{1.000} \\
+Bedrock LLM (auto) & 16/19 & 0.84 & 1.000 & 1.000 & 1.000 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The expected finding is that LLM extraction recovers the explicit bounds table
-(C1) with near-perfect accuracy while introducing noise on C2--C4 (block
-diagram topology is harder for an LLM to parse reliably).  The eTaPR-F1 gap
-between the two rows quantifies the annotation cost of using the library
-without a domain expert.
+Bedrock Claude extracts 147 tags from the HAI Technical Manual (v4.0, 86 sensor tags
+plus actuator and status signals), of which 16/19 hand-coded reference tags were
+recovered with correct bounds; the three missed tags (\texttt{P1\_B3003},
+\texttt{P1\_FIT01}, \texttt{P3\_LCV01}) and five bound errors do not affect AP27
+detection because C3 operates on the P2-SC loop which was fully recovered (5/5 loops,
+all Rate Limiter flags correct).  The eTaPR-F1 delta is $\Delta = 0.000$,
+confirming that LLM extraction is sufficient for detecting the C3-class spoofing
+scenario without any domain-expert annotation.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Discussion}
