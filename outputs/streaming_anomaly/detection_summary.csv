@@ -1,0 +1,6 @@
+attack,windows,detected,avg_latency_s,recall
+ddos,8,8,1.5,1.0
+ip-scan,24,20,1.47,0.833
+mitm,16,16,1.92,1.0
+port-scan,18,17,3.36,0.944
+replay,8,8,4.98,1.0

@@ -1,0 +1,37 @@
+{
+  "window_seconds": 60,
+  "zscore_threshold": 3.5,
+  "variance_collapse_thr": 0.05,
+  "alert_cooldown_s": 5,
+  "plc1_baseline_sensors": 8,
+  "plc2_baseline_sensors": 5,
+  "total_alerts": 2641,
+  "alert_breakdown": {
+    "cross_layer": 2619,
+    "variance_collapse": 22
+  },
+  "cross_layer_candidates": 2619,
+  "attack_windows_scored": 74,
+  "overall_recall": 0.9324,
+  "per_attack_recall": {
+    "ddos": 1.0,
+    "ip-scan": 0.833,
+    "mitm": 1.0,
+    "port-scan": 0.944,
+    "replay": 1.0
+  },
+  "per_attack_avg_latency_s": {
+    "ddos": 1.5,
+    "ip-scan": 1.47,
+    "mitm": 1.92,
+    "port-scan": 3.36,
+    "replay": 4.98
+  },
+  "interpretation": {
+    "replay": "High recall expected \u2014 variance collapse across multiple PLC1 sensors is the replay signature. Physically frozen registers = strong signal. Connects to 02_replay_detection.py finding: HDBSCAN and KMeans miss this because static data looks like a normal dense cluster.",
+    "ddos": "Physical sensors may not change during a network-layer DDoS \u2014 the attack floods the network but doesn't disrupt PLC logic. Cross-layer enrichment with network flow data needed for high recall.",
+    "port-scan / ip-scan": "Passive reconnaissance. No physical impact expected. Physical-layer alerts here would be coincidental. Network-layer classifier (05_attack_classifier.py) is the right detector.",
+    "mitm": "MITM may cause small deviations in PLC values if packets are modified. TTL anomalies in network flows (see 05) are a stronger MITM signal.",
+    "cross_layer_design": "A production ICS anomaly platform joins both layers: ingest network flows from Dataset.csv AND physical snapshots from PLC CSVs in the same time-bucketed stream. Alert only when network looks normal AND physical stasis is detected. This eliminates most false positives."
+  }
+}
