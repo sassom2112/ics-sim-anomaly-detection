@@ -411,17 +411,15 @@ feat_cols = [c for c in eval_df.columns
                           "attack_P1", "attack_P2", "attack_P3", "attack_P4"}
              and pd.api.types.is_numeric_dtype(eval_df[c])]
 
-# Per-window z-score (max across all features in window)
+# Per-window z-score (max across all features in window) — vectorized
 train_mean = hai_train[feat_cols].mean()
 train_std  = hai_train[feat_cols].std().replace(0, 1e-9)
 
-z_window: Dict[int, float] = {}
-for bkt, grp in eval_df.groupby("bucket"):
-    zs = ((grp[feat_cols].fillna(train_mean) - train_mean) / train_std).abs()
-    z_window[int(bkt)] = float(zs.values.max()) if len(zs) else 0.0
+z_row = ((eval_df[feat_cols].fillna(train_mean) - train_mean) / train_std).abs().max(axis=1)
+z_window_s = eval_df.assign(_z=z_row).groupby("bucket")["_z"].max()
 
 ZSCORE_THR = 5.0
-z_pred = np.array([int(z_window.get(r.bucket_ts, 0) > ZSCORE_THR) for r in results])
+z_pred = np.array([int(z_window_s.get(r.bucket_ts, 0) > ZSCORE_THR) for r in results])
 
 # ── eTaPR reports ─────────────────────────────────────────────────────────────
 
