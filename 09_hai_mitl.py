@@ -51,7 +51,12 @@ log = logging.getLogger(__name__)
 
 # ── Library import (mitl package in same repo) ────────────────────────────────
 import sys
-sys.path.insert(0, str(Path(__file__).parent))
+try:
+    _repo_root = str(Path(__file__).parent)
+except NameError:
+    # Jupyter / Kaggle notebook — __file__ is not defined
+    _repo_root = str(Path.cwd())
+sys.path.insert(0, _repo_root)
 
 from mitl import (BaselineCalibrator, BehavioralBaseline, ConstraintProjector,
                   ConstraintSpec, WindowConstraintResult, etapr_report)
@@ -71,12 +76,18 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # ══════════════════════════════════════════════════════════════════════════════
 
 HAI_CANDIDATES = [
+    # Kaggle — specific version subdirectory (preferred — avoids mixing versions)
+    "/kaggle/input/hai-security-dataset/hai-22.04",
+    "/kaggle/input/hai-security-dataset/hai-23.05",
     "/kaggle/input/hai-security-dataset",
+    "/kaggle/input/hai-dataset/hai-22.04",
     "/kaggle/input/hai-dataset",
     "/kaggle/input/hai",
+    # Local
+    "hai/hai-22.04",
     "hai",
     "data/hai",
-    str(Path(__file__).parent / "hai"),
+    str(Path(_repo_root) / "hai"),
 ]
 
 HAI_DIR = next((p for p in HAI_CANDIDATES if os.path.exists(p)), None)
