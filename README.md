@@ -795,18 +795,110 @@ python 07_cross_layer_classifier.py    # Cross-layer fusion — the headline res
 
 ---
 
+## Sprint 8 — Manual-in-the-Loop Constraint Layer (`08_mitl_constraint_layer.py`)
+
+> **Thesis:** If you cannot add signal intelligence, add a manual in the loop.
+
+The 95% ceiling from Sprint 5 requires labeled attack data. The MITL experiment asks: what can you detect with *zero* attack labels, using only the system specification?
+
+Four constraints derived from the ICSSim v2 PLC register layout and process spec:
+
+| Constraint | Source | What it encodes |
+|-----------|--------|----------------|
+| C1 — Saturation bounds | PLC register min/max columns | Level must be within setpoint window |
+| C2 — State-flow consistency | Instrument range spec | Open valve → flow > deadband |
+| C3 — Valve cycle invariant | Process description | Input valve variance > 5% of warm-up baseline |
+| C4 — Cross-layer discrepancy | Process + network spec | **Elevated Modbus + frozen valve = physically impossible** |
+
+**The 74% valve-stasis finding:** Static threshold for C3 generates 74% false positives on normal windows — the process legitimately idles with the input valve held open. Warm-up baseline calibration resolves this: the threshold becomes relative to observed normal variance, not an absolute value.
+
+**Three-tier result:**
+
+| Method | Attack Labels | Replay Recall |
+|--------|:---:|---:|
+| S3: Network ML (LightGBM) | Yes | 49.9% |
+| S8a: MITL-Static (spec only) | **No** | 25.0% |
+| S5: Cross-layer ML | Yes | 95.4% |
+| **S4=S8b: MITL-Calibrated** | **No** | **100.0%** |
+
+The specification encodes *what invariant breaks*. The warm-up encodes *what normal looks like*. Neither alone closes the gap; together they achieve 100% recall with no attack labels.
+
+---
+
+## Sprint 9 — HAI 22.04 Benchmark (`09_hai_mitl.py`)
+
+Applies the MITL framework to the HAI 22.04 steam-turbine dataset using constraints derived from the **HAI Security Dataset Technical Manual v4.0**. Evaluates with eTaPR — the HAI-mandated event-level metric.
+
+Four constraints, each with page/figure attribution from the manual:
+
+| Constraint | Source | Key invariant |
+|-----------|--------|--------------|
+| C1 — Saturation bounds | Table 1, pp 12–15 | 19 tags, explicit [min, max] per tag |
+| C2 — Rate limiter invariant | Figures 4–13, pp 7–11 | All 5 loops have Rate Limiter/Ramp blocks |
+| C3 — P2-SC tracking (AP27) | Figure 11 + AP27, pp 10+27 | Frozen SIT01 during AutoSD ramp = sensor spoofing |
+| C4 — Cross-layer P4→P2 | Figure 10, p 10 | P4-STM power demand drives P2 speed; frozen P2 = broken coupling |
+
+C3 is the HAI equivalent of the ICSSim valve-stasis invariant: the manual explicitly states *"PID controller to maintain SIT01 as close as possible to AutoSD"* and attack AP27 precisely violates this.
+
+Run on Kaggle with the HAI dataset attached: `09_hai_mitl.py` auto-detects the data path and outputs eTaPR results to `outputs/hai_mitl/`.
+
+---
+
+## Sprint 10–12 — `mitl` Library, Bedrock Extraction, CLI
+
+The MITL framework is packaged as a standalone pip-installable library:
+
+**→ [`github.com/sassom2112/mitl`](https://github.com/sassom2112/mitl)**
+
+```bash
+pip install mitl
+pip install "mitl[bedrock]"   # + AWS Bedrock LLM extraction
+```
+
+Three capabilities beyond the sprint scripts:
+
+**1. Manual Library** — persistent storage of ConstraintSpecs with review state:
+```bash
+mitl ingest scada_v4.pdf --name plant-a    # Bedrock extracts bounds + topology
+mitl review plant-a                         # see what needs human verification
+mitl approve plant-a --tags P3_FIT02        # promote reviewed items to conf=1.0
+```
+
+**2. Generic constraints** — `mitl.generic` derives C1–C4 from *any* ConstraintSpec automatically. No dataset-specific code needed for new systems.
+
+**3. Bedrock ablation** (`10_bedrock_ablation.py`) — quantifies the eTaPR cost of LLM-extracted constraints vs. hand-coded. This is Table 3 in the paper: how much detection quality do you trade for zero annotation cost?
+
+---
+
+## The Paper
+
+**"Manual-in-the-Loop (MITL): Specification-Derived Constraint Projection for ICS Anomaly Detection"**
+
+Draft: [`mitl_paper.tex`](mitl_paper.tex) — targeting AISec @ CCS 2027 (ACM sigconf format).
+
+Companion to [CATT](https://github.com/sassom2112/catt-ccs) (AISec @ CCS 2026):
+- CATT: constraint projection exposes inflated **evasion** in adversarial NIDS
+- MITL: constraint projection closes **detection gaps** in ICS anomaly detection
+
+**Pending for paper submission:**
+1. Run `09_hai_mitl.py` on Kaggle with HAI 22.04 dataset attached → fills Table 2 eTaPR numbers
+2. Run `10_bedrock_ablation.py` with real HAI manual PDF → fills Table 3 ablation
+
+---
+
 ## Related Work
 
 | Repo | Connection |
 |------|-----------|
+| [**mitl**](https://github.com/sassom2112/mitl) | The pip-installable library born from this repo's experiments. Use this if you want the tool, not the research history. |
+| [catt-ccs](https://github.com/sassom2112/catt-ccs) | CATT companion paper: constraint projection on the evasion side (AISec @ CCS 2026). |
 | [netadv](https://github.com/sassom2112/netadv) | Adversarial network flows constrained to domain bounds — evade classifiers by being geometrically legitimate. Same failure mode, IT layer. |
 | [adversarial-lab](https://github.com/sassom2112/adversarial-lab) | Framework for constraint-respecting perturbations across multiple network attack classifiers. |
-| [Elastic-ir-agent](https://github.com/sassom2112/Elastic-ir-agent) | Multi-agent IR where a Forensic Auditor re-verifies every Triage Agent claim against physical disk artifacts. The architectural response to single-layer detection failure. |
 
-**The pattern across all three:** Detection fails when an adversary operates inside the bounds the model was trained to recognise as normal. The fix is not a better single-layer detector — it is corroboration across independent layers, or detection at the protocol layer where the attack actually leaves a trace.
+**The pattern across all four:** Detection fails when an adversary operates inside the bounds the model was trained to recognise as normal. The fix is not a better detector at the same layer — it is a layer that operates where statistics cannot.
 
 ---
 
-*The one-paragraph interview answer:*
+*The one-paragraph interview answer (updated):*
 
-> "My network-only classifier hit a 49% recall ceiling on replay attacks regardless of algorithm or tuning. The physical-layer streaming analysis showed why: replay doesn't alter network statistics — it suppresses PLC register variance. I joined 30-second PLC variance buckets onto each network flow, after correcting a 7200-second timezone discrepancy that would have silently corrupted 86% of the join. Adding those 16 features lifted LightGBM replay recall from 50% to 95%, and macro-F1 from 65% to 85%, with no other changes. The improvement also generalised to DDoS, because both attacks cause physical register stasis through the same mechanism. The lesson: you cannot tune your way out of missing features."
+> "My network-only classifier hit a 49% recall ceiling on replay attacks regardless of algorithm or tuning. The physical-layer streaming analysis showed why: replay doesn't alter network statistics — it suppresses PLC register variance. I joined 30-second PLC variance buckets onto each network flow, correcting a 7200-second timezone discrepancy that would have silently corrupted 86% of the join. That lifted LightGBM replay recall from 50% to 95%. But cross-layer ML still requires attack labels to train. The MITL experiment asked: what can you detect from the spec alone? Encoding four constraints from the system documentation — with warm-up calibration against unlabeled normal data — achieved 100% replay recall with zero attack labels. The spec encodes what physical reality requires; warm-up calibration encodes what normal operation looks like. Neither alone is sufficient. The lesson: you cannot tune your way out of missing physics."
