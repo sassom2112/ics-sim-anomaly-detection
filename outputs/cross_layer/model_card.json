@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "script": "07_cross_layer_classifier.py",
+  "hypothesis": "Adding PLC sensor variance features to network flow classifier improves replay recall",
+  "timezone_finding": "Network flow timestamps require +7200s offset to align with PLC data",
+  "bucket_seconds": 30,
+  "n_train": 34288,
+  "n_test": 11430,
+  "n_net_features": 52,
+  "n_plc_features": 16,
+  "n_fused_features": 68,
+  "results": {
+    "RandomForest": {
+      "baseline_macro_f1": 0.6787,
+      "fused_macro_f1": 0.8234,
+      "macro_f1_delta": 0.1447,
+      "replay_recall_baseline": 0.4893,
+      "replay_recall_fused": 0.8828,
+      "replay_recall_delta": 0.3935,
+      "per_class_baseline": {
+        "Normal": 0.9616,
+        "ddos": 0.6739,
+        "ip-scan": 0.2528,
+        "mitm": 0.8024,
+        "port-scan": 0.623,
+        "replay": 0.4893
+      },
+      "per_class_fused": {
+        "Normal": 0.9686,
+        "ddos": 0.9156,
+        "ip-scan": 0.2865,
+        "mitm": 0.878,
+        "port-scan": 0.8282,
+        "replay": 0.8828
+      }
+    },
+    "LightGBM": {
+      "baseline_macro_f1": 0.6512,
+      "fused_macro_f1": 0.8495,
+      "macro_f1_delta": 0.1983,
+      "replay_recall_baseline": 0.4986,
+      "replay_recall_fused": 0.9535,
+      "replay_recall_delta": 0.4549,
+      "per_class_baseline": {
+        "Normal": 0.9017,
+        "ddos": 0.7232,
+        "ip-scan": 0.264,
+        "mitm": 0.8156,
+        "port-scan": 0.6786,
+        "replay": 0.4986
+      },
+      "per_class_fused": {
+        "Normal": 0.9409,
+        "ddos": 0.9602,
+        "ip-scan": 0.5,
+        "mitm": 0.9257,
+        "port-scan": 0.9085,
+        "replay": 0.9535
+      }
+    }
+  },
+  "top_plc_features": [
+    "plc1_var_tank_level_value(2)",
+    "plc1_range_tank_level_value(2)",
+    "plc1_var_tank_output_valve_status(5)",
+    "plc1_var_tank_level_min(3)",
+    "plc1_range_tank_level_max(4)",
+    "plc1_range_tank_level_min(3)",
+    "plc1_var_tank_level_max(4)",
+    "plc1_var_tank_input_valve_status(0)",
+    "plc1_range_tank_input_valve_status(0)",
+    "plc1_range_tank_output_valve_status(5)"
+  ],
+  "narrative": "Network-only classifiers plateau at ~49% replay recall because replay attacks do not alter network flow statistics \u2014 they use structurally valid packets. The physical signature (PLC register variance collapse) is invisible to a network-layer model. By joining 30-second PLC variance buckets onto each network flow, the fused model gains direct access to the physical stasis signal. The replay recall improvement quantifies exactly how much information was being left on the table by treating each data layer in isolation."
+}

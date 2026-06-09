@@ -1,0 +1,13 @@
+model,class,baseline_recall,fused_recall,delta
+RandomForest,Normal,0.9616,0.9686,0.007
+RandomForest,ddos,0.6739,0.9156,0.2417
+RandomForest,ip-scan,0.2528,0.2865,0.0337
+RandomForest,mitm,0.8024,0.878,0.0756
+RandomForest,port-scan,0.623,0.8282,0.2052
+RandomForest,replay,0.4893,0.8828,0.3935
+LightGBM,Normal,0.9017,0.9409,0.0392
+LightGBM,ddos,0.7232,0.9602,0.237
+LightGBM,ip-scan,0.264,0.5,0.236
+LightGBM,mitm,0.8156,0.9257,0.1101
+LightGBM,port-scan,0.6786,0.9085,0.2299
+LightGBM,replay,0.4986,0.9535,0.4549
