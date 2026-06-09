@@ -321,10 +321,60 @@ c4_cross_layer_p4_p2.constraint_id  = "C4"
 c4_cross_layer_p4_p2.spec_confidence = 0.80
 
 
+def c1_from_spec(
+    window_df: pd.DataFrame,
+    baseline:  BehavioralBaseline,
+    spec:      ConstraintSpec,
+) -> List[ConstraintViolation]:
+    """
+    Dynamic C1: reads bounds from spec.tag_specs instead of the hardcoded dict.
+
+    This is the ablation variant — used when the ConstraintSpec was produced
+    by LLM extraction rather than hand-coding.  The bounds come from whatever
+    the extractor found, so precision/recall of the extraction propagates
+    directly into eTaPR scores.
+    """
+    viols: List[ConstraintViolation] = []
+    for tag, ts in spec.tag_specs.items():
+        if tag not in window_df.columns:
+            continue
+        vals = window_df[tag].dropna()
+        if vals.empty:
+            continue
+        lo_viol = vals[vals < ts.min_val]
+        hi_viol = vals[vals > ts.max_val]
+        if not lo_viol.empty or not hi_viol.empty:
+            viols.append(ConstraintViolation(
+                constraint_id="C1",
+                constraint_name="saturation-bounds",
+                severity="definite",
+                evidence=(f"{tag}: [{vals.min():.3f}, {vals.max():.3f}] {ts.unit} "
+                          f"outside spec [{ts.min_val}, {ts.max_val}] {ts.unit}"),
+                spec_page=ts.source.page_number,
+                spec_figure=ts.source.figure_id,
+                spec_quote=ts.source.quote,
+            ))
+    return viols
+
+
+c1_from_spec.constraint_id  = "C1"
+c1_from_spec.spec_confidence = 0.85   # LLM-extracted bounds are slightly less certain
+
+
 def hai_constraints() -> list:
-    """Return the ordered list of HAI 22.04 MITL constraint functions."""
+    """Return the ordered list of HAI 22.04 MITL constraint functions (hand-coded)."""
     return [
         c1_saturation_bounds,
+        c2_rate_limiter_invariant,
+        c3_tracking_invariant_p2sc,
+        c4_cross_layer_p4_p2,
+    ]
+
+
+def hai_constraints_from_spec() -> list:
+    """Return constraints that read bounds from the ConstraintSpec (ablation variant)."""
+    return [
+        c1_from_spec,           # uses spec.tag_specs — works with LLM-extracted spec
         c2_rate_limiter_invariant,
         c3_tracking_invariant_p2sc,
         c4_cross_layer_p4_p2,

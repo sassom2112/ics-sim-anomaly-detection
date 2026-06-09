@@ -1,0 +1,71 @@
+{
+    "version": "1.0",
+    "script": "10_bedrock_ablation.py",
+    "eval_source": "DEMO",
+    "mock_mode": true,
+    "spec_comparison": {
+        "hand_n_tags": 19,
+        "hand_n_loops": 5,
+        "llm_n_tags": 13,
+        "llm_n_loops": 2,
+        "tag_coverage": 0.684,
+        "n_bounds_errors": 2,
+        "bounds_errors": {
+            "P1_FIT01": {
+                "hand_bounds": [
+                    0.0,
+                    10.0
+                ],
+                "llm_bounds": [
+                    0.0,
+                    12.0
+                ],
+                "err_lo": 0.0,
+                "err_hi": 2.0
+            },
+            "P2_RTR": {
+                "hand_bounds": [
+                    0.0,
+                    2880.0
+                ],
+                "llm_bounds": [
+                    0.0,
+                    3000.0
+                ],
+                "err_lo": 0.0,
+                "err_hi": 120.0
+            }
+        },
+        "rate_limiter_flags_correct": 2
+    },
+    "run_A_hand_coded": {
+        "label": "Hand-coded",
+        "n_true_events": 2,
+        "n_pred_clusters": 6,
+        "std_precision": 0.0789,
+        "std_recall": 0.3,
+        "std_f1": 0.125,
+        "etap": 1.0,
+        "etar": 1.0,
+        "etapr_f1": 1.0,
+        "buffer_steps": 60,
+        "n_flagged": 38,
+        "flag_rate": 0.6333
+    },
+    "run_B_llm_extracted": {
+        "label": "LLM-extracted (Bedrock)",
+        "n_true_events": 2,
+        "n_pred_clusters": 6,
+        "std_precision": 0.0789,
+        "std_recall": 0.3,
+        "std_f1": 0.125,
+        "etap": 1.0,
+        "etar": 1.0,
+        "etapr_f1": 1.0,
+        "buffer_steps": 60,
+        "n_flagged": 38,
+        "flag_rate": 0.6333
+    },
+    "etapr_f1_delta": 0.0,
+    "table3_latex": "\\midrule\nHand-coded & 19/19 & 1.00 & 1.000 & 1.000 & \\textbf{1.000} \\\\\nBedrock LLM (auto) & 13/19 & 0.68 & 1.000 & 1.000 & 1.000 \\\\\n"
+}

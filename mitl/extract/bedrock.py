@@ -81,7 +81,7 @@ Rules:
 def extract_constraint_spec(
     pdf_path: str | Path,
     bedrock_client: Any,
-    model_id: str = "us.anthropic.claude-sonnet-4-5",
+    model_id: str = "anthropic.claude-sonnet-4-6",
     max_tokens: int = 4096,
 ) -> "ConstraintSpec":  # noqa: F821 — forward ref to avoid circular import
     """
