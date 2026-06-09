@@ -38,9 +38,10 @@ This is a learning document as much as a codebase. Every chart has an explanatio
    - [Why LGB beats RF on fused data](#why-lgb-beats-rf-on-fused-data)
    - [The DDoS surprise](#the-ddos-surprise)
    - [Charts and results](#07-charts-and-results)
-9. [Rigid Methodology](#rigid-methodology)
-10. [Setup & Run](#setup--run)
-11. [Related Work](#related-work)
+9. [Kaggle Notebook — Interactive Analysis Companion](#kaggle-notebook--interactive-analysis-companion)
+10. [Rigid Methodology](#rigid-methodology)
+11. [Setup & Run](#setup--run)
+12. [Related Work](#related-work)
 
 ---
 
@@ -728,6 +729,50 @@ The delta chart quantifies exactly how much information was left on the table. E
 ![Feature Importance Fused](outputs/cross_layer/feature_importance_fused.png)
 
 The PLC variance features appear alongside the network features in the top 20. `plc1_var_tank_level_value` is typically in the top 5 — confirming that the model learned to use the variance collapse signal exactly as the hypothesis predicted.
+
+---
+
+## Kaggle Notebook — Interactive Analysis Companion
+
+**Notebook:** [`ics_sim_ml_blind_spot.ipynb`](ics_sim_ml_blind_spot.ipynb)  
+**Kaggle:** [kaggle.com/code/sassom2112/ics-sim-ml-blind-spot](https://www.kaggle.com/code/sassom2112/ics-sim-ml-blind-spot)
+
+The notebook is a self-contained teaching document that runs fully in-browser on Kaggle with no local setup. It tells the same story as the `.py` scripts but adds:
+
+- **Purdue Reference Model framing** — every feature is placed in its physical layer before any analysis begins. This is the standard ICS/OT vocabulary (IEC 62443 / ISA-99); using it from the start frames every finding in terms an operator would recognise.
+- **Analytical narration** — each section states the question, shows the method, and interprets the result. The goal is that you can read the notebook without the repo and still understand why each decision was made.
+- **HAI testbed comparison** — applies the same methodology to the HAI 22.04 real-hardware dataset and shows where the approach generalises and where new failure modes appear.
+
+### Notebook Structure
+
+| Section | What it demonstrates |
+|---------|---------------------|
+| 1. Purdue Reference Model | Where each data source sits in the ICS layer stack |
+| 2. Layer-partitioned EDA | Feature groups by protocol function; y-axis clipping for zero-inflated features |
+| 3. Baseline RF | Network-only classifier; macro-F1 vs accuracy framing |
+| 4. Anti-Blindspot Reveal | Per-attack-class recall table; replay at ~49% |
+| 5. Mathematical Proof of Failure | PCA geometric proof + Mann-Whitney statistical proof |
+| 6. The Desynchronized Clock | 7200-second offset discovery; join coverage before and after |
+| 7. Cross-Layer Fusion | PLC variance buckets joined onto flows; +45 point replay recall lift |
+| 8. Structural Solution | TXID reuse as deterministic signal; three-layer detection architecture |
+| 9–12. HAI Testbed | Same methodology on real Emerson/GE/Siemens hardware |
+
+### The Two Failure Modes (Section 11)
+
+The HAI sections introduce the failure mode that is the mirror image of the ICSSim replay problem:
+
+| Failure mode | Technical cause | Operational consequence |
+|---|---|---|
+| **False Negative** (ICSSim replay) | Feature has no signal for this attack — recall → 0 | Attack succeeds undetected; operators believe the system is safe |
+| **False Positive** (HAI P2 turbine flags) | Feature std≈0 in normal data → z-score=∞ on any deviation — precision → 0 | Alert fatigue; operators learn to ignore alarms; real attack looks like alarm #1,001 |
+
+Both failures are invisible in an aggregate F1 score. The key line:
+
+> *"The precision-recall tradeoff is not a slider — it's a feature problem. You cannot tune your way out of a structural feature gap in either direction."*
+
+### Path Detection (Kaggle)
+
+Kaggle mounts datasets at varying depths depending on the upload method. The notebook uses `os.walk` to find `Dataset.csv` at any nesting depth, then selects the newest HAI version whose test file contains attack label columns. This makes the notebook work regardless of dataset slug, upload method, or HAI version.
 
 ---
 
