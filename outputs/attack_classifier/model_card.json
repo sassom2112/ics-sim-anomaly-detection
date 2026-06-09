@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "created": "2026-06-08T01:02:11.534784",
+  "dataset": "ICSSim v2 \u2014 alirezadehlaghi/icssim",
+  "n_train": 34288,
+  "n_test": 11430,
+  "n_features": 52,
+  "classes": [
+    "Normal",
+    "ddos",
+    "ip-scan",
+    "mitm",
+    "port-scan",
+    "replay"
+  ],
+  "class_distribution": {
+    "Normal": 30236,
+    "replay": 4300,
+    "ddos": 4221,
+    "port-scan": 3235,
+    "mitm": 3014,
+    "ip-scan": 712
+  },
+  "models": {
+    "random_forest": {
+      "macro_f1": 0.6787,
+      "replay_recall": 0.4893,
+      "path": "outputs/attack_classifier/models/random_forest.joblib"
+    },
+    "lightgbm": {
+      "macro_f1": 0.6507,
+      "replay_recall": 0.4986,
+      "best_iteration": 499,
+      "path": "outputs/attack_classifier/models/lightgbm.txt"
+    },
+    "claude_zero_shot": {
+      "model_id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "accuracy": 0.2,
+      "note": "Zero-shot, no fine-tuning. Bedrock required."
+    }
+  },
+  "top_15_features_rf": [
+    "sAckDelayAvg",
+    "rInterPacketAvg",
+    "rLoad",
+    "sLoad",
+    "duration",
+    "rAckDelayAvg",
+    "sInterPacketAvg",
+    "rAckDelayMax",
+    "rBytesSum",
+    "rPackets",
+    "rPayloadSum",
+    "sAckDelayMax",
+    "sPackets",
+    "sPayloadSum",
+    "sBytesSum"
+  ],
+  "trustworthiness_notes": [
+    "replay recall is lower than other classes \u2014 consistent with 02_replay_detection.py finding that replay does not shift network-layer feature space.",
+    "Claude zero-shot struggles most with replay and MITM \u2014 confirms these attack types require physical-layer or behavioral context that is not present in flow statistics.",
+    "Class imbalance handled via balanced class_weight (RF) and manual sample weights (LGB)."
+  ],
+  "intended_use": "ICS/OT network traffic classification. Not for safety-critical standalone use.",
+  "limitations": "Trained on ICSSim v2 simulation data. Real-world OT environments may differ."
+}
