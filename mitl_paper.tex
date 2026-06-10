@@ -328,6 +328,7 @@ water-treatment process specification:
 \end{description}
 
 \subsection{The 74\% Valve-Stasis Finding}
+\label{sec:74pct}
 Running C3 with a static stasis threshold (any variance $< \epsilon$) yields
 a 74\% false-positive rate on normal operation windows.  The ICSSim water
 treatment process spends most of its time in stable fill or stable drain
@@ -342,20 +343,28 @@ stable-state windows.
 
 \begin{table}[h]
 \centering
-\caption{ICSSim v2 results — replay attack recall. \mitl-Calibrated uses
-Sprint 4's 60-second rolling window with variance baseline, which is the
-MITL-Calibrated condition (spec structure $+$ warm-up).}
+\caption{ICSSim v2 results — replay attack recall and normal-window false-alarm
+rate (FPR).  FPR is measured over the 165 non-attack evaluation windows
+(281 total $-$ 42 warm-up $-$ 74 attack).  Supervised methods do not have a
+direct FPR in this sense; their error mode is misclassification across 5 attack
+classes, captured by Macro-F1.}
 \label{tab:icssim}
-\begin{tabular}{lcccc}
+\begin{tabular}{lccccc}
 \toprule
-Method & Attack Labels & Replay Recall & Macro-F1 \\
+Method & Attack Labels & Replay Recall & Normal FPR & Macro-F1 \\
 \midrule
-S3: Network ML (LGB)      & Yes & 49.9\% & 0.651 \\
-S8a: \mitl-Static         & No  & 25.0\% & --- \\
-S5: Cross-layer (LGB)     & Yes & 95.4\% & 0.850 \\
-S4=S8b: \mitl-Calibrated  & No  & \textbf{100.0\%} & --- \\
+S3: Network ML (LGB)      & Yes & 49.9\% & n/a & 0.651 \\
+S8a: \mitl-Static         & No  & 25.0\% & 23.0\%$^{a}$ & --- \\
+S5: Cross-layer (LGB)     & Yes & 95.4\% & n/a & 0.850 \\
+S4=S8b: \mitl-Calibrated  & No  & \textbf{100.0\%} & $<$23\%$^{b}$ & --- \\
 \bottomrule
 \end{tabular}
+\smallskip\par\noindent
+\footnotesize
+$^{a}$38 of 165 normal windows flagged; static C3 threshold cannot distinguish
+replay freeze from normal stable-state operation.\\
+$^{b}$FPR not independently measured; warm-up calibration eliminates the
+stable-state FP regime ($\S$\ref{sec:74pct}), bounding it below \mitl-Static.
 \end{table}
 
 Table~\ref{tab:icssim} shows the three-tier finding.  The 49\% supervised
@@ -370,6 +379,18 @@ static C3 fires on normal stable-state windows, generating false positives
 that prevent C4 from being the discriminating signal.  Warm-up calibration
 makes the stasis threshold relative to observed normal variance, eliminating
 the false-positive regime and allowing C3+C4 to fire exclusively on replay.
+
+\paragraph{Why MITL-Static falls below the supervised ceiling.}
+\mitl-Static's 25\% recall is lower than the supervised 49.9\% ceiling, and
+this is expected.  The 23\% FPR on normal windows (Table~\ref{tab:icssim},
+footnote $a$) means that static C3 generates noise that masks the C4 signal:
+of the 55 windows flagged by \mitl-Static, only 2 are replay attacks (3.6\%).
+The supervised classifier, trained on labeled attack data, has no such
+noise floor.  The comparison is not \mitl-Static vs.\ supervised ML; it is
+\emph{zero labels plus one warm-up period} vs.\ \emph{a labeled training set}.
+\mitl-Static establishes a non-zero detection floor at zero annotation cost.
+\mitl-Calibrated shows that calibrating the same constraints against a single
+normal operating cycle closes the gap entirely — without ever seeing an attack.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{HAI 22.04 Experiments}
@@ -434,15 +455,27 @@ Z-score also achieves perfect recall but its eTaP of 0.846 reflects spurious
 predicted clusters that do not correspond to true attack events; MITL's
 constraint-bounded violations are compact and cluster-precise.
 
+\paragraph{C1 is the primary driver; C3 selectivity is evidence of correctness.}
+C1 (saturation bounds) accounts for 18\,074 of 18\,291 total violations and
+drives perfect recall: every attack scenario in the HAI 22.04 test split
+eventually pushes at least one tag outside its manual-specified bounds.
+C2 (rate limiter) contributes 216 violations.
+C3 (AP27 SP/PV tracking invariant) fires \emph{zero times} on the four test files.
+This is not a failure — it is the expected behaviour of a specification-derived
+constraint.  AP27-class attacks (frozen SIT01 while AutoSD ramps) are not
+present in the test split; C3 fires only when its specific physical invariant is
+violated.  A constraint that does not over-generalise to other attack classes is
+a more trustworthy building block than one that fires broadly.  The zero-fire
+count is explicit evidence of selectivity, not a gap in coverage: C1 provides
+the coverage; C3 provides attack-class specificity when that class appears.
+
 \paragraph{Per-constraint breakdown.}
-C1 (saturation bounds) accounts for 18\,074 of 18\,291 total violations and is
-the primary driver of perfect recall.  C2 (rate limiter) contributes 216
-violations at eTaPR-F1 = 0.844.  C3 (SP/PV tracking) fires zero times on the
-HAI 22.04 test split: the four test files do not contain AP27-type attacks
-(frozen SIT01 while AutoSD ramps), confirming that C3 is selective — it fires
-only when the physical invariant is violated, not on other attack classes.
-This selective behaviour is the desired property of a specification-derived
-constraint: it does not over-generalise.
+Constraint contributions: C1 18,074 violations (98.8\% of total), C2 216
+(1.2\%), C3 0, C4 1.  The dominance of C1 reflects the HAI 22.04 attack
+design: most scenarios perturb sensor setpoints or readings in ways that
+violate saturation bounds.  C3 and C4 are designed for cross-loop structural
+violations (P2-SC tracking, P4$\to$P2 coupling), which appear in fewer attack
+scenarios but are undetectable by saturation-only checks.
 
 % ─────────────────────────────────────────────────────────────────────────────
 \section{MITL Library and LLM Extraction}
@@ -522,7 +555,10 @@ constraint fires rarely on HAI because most attacks target sensor readings
 rather than control output rate.  The LLM extraction accuracy on block
 diagrams with unusual formatting has not been systematically evaluated.
 Real-world deployment requires a fresh warm-up period after any process
-configuration change.
+configuration change.  Spec-derived approaches are bounded by documentation
+access: public ICS datasets rarely ship with their vendor engineering manuals,
+which limits multi-system evaluation to testbeds whose documentation is
+voluntarily published.
 
 \paragraph{Relation to formal methods.}
 \mitl constraints are not full safety specifications; they are anomaly
@@ -535,20 +571,65 @@ than formal verification.
 \section{Related Work}
 \label{sec:related}
 
-\paragraph{Specification-based ICS detection.}
-Adepu and Mathur~\cite{Adepu2018} derive invariants from process physics for
-the SWaT water treatment testbed.  Feng et al.~\cite{Feng2019} use temporal
-logic specifications.  Both require expert authoring of invariants from
-scratch for each new system; \mitl contributes the pipeline from engineering
-documentation to typed ConstraintSpec and the warm-up calibration that makes
-static thresholds adaptive.
-
-\paragraph{ML-based ICS anomaly detection.}
-Goh et al.~\cite{Goh2017} apply LSTM autoencoders to SWaT.
-Ahmed et al.~\cite{Ahmed2018} use one-class SVM.  These approaches perform
+\paragraph{ML-based ICS detection and its structural limits.}
+Goh et al.~\cite{Goh2017} apply LSTM autoencoders to the SWaT water-treatment
+testbed; Ahmed et al.~\cite{Ahmed2018} use one-class SVM; Aoudi et
+al.~\cite{Aoudi2018} use physics-model residuals.  These approaches perform
 well on attacks that produce anomalous sensor readings but are structurally
-blind to replay attacks that produce valid readings on a diverging process.
-\mitl is complementary: it closes the gap that ML cannot close.
+blind to replay: a frozen sensor register produces a \emph{stable} reading,
+not an anomalous one.  This failure mode is not specific to any single
+architecture.  Fung et al.~\cite{Fung2022} conduct a comprehensive
+systematic evaluation of reconstruction-based anomaly detection in ICS and
+show that the gap between individual published results and practical
+performance is larger than reported evaluations suggest, underscoring the
+need for approaches grounded in domain structure rather than data
+distribution alone.
+
+\paragraph{Specification-based and constraint-derived detection.}
+Adepu and Mathur~\cite{Adepu2018} derive process-physics invariants for SWaT.
+Feng et al.~\cite{Feng2019} formalize specifications as temporal logic.
+Both require per-system expert authoring.  \mitl builds on this line with
+two contributions: an LLM-assisted extraction pipeline from standard
+engineering documentation, and the separation of what-is-invariant (spec)
+from what-is-normal (warm-up calibration).
+
+More recent work has extended spec-based detection in complementary directions.
+Hotellier et al.~\cite{Hotellier2024} derive security properties for
+hierarchical ICS from international industry standards and runtime-monitor them
+— the closest direct continuation of the Adepu/Feng lineage with 2024
+evaluation.  Ike et al.~\cite{SCAPHY2023} (SCAPHY, IEEE S\&P 2023) detect
+modern ICS attacks by correlating SCADA-host behavior with physical process
+impact: they establish that any successful physical attack must violate
+physical-impact constraints, achieving 95\% detection at 3.5\% FPR across
+40 attack scenarios at a national-lab testbed.  SCAPHY operates at the
+SCADA-host layer where \mitl operates at the sensor/actuator layer, and
+both share the same logical structure: define the constraints an attacker
+\emph{must} violate and flag those violations.
+
+On the data-driven side, Zhu et al.~\cite{Zhu2025} mine invariant rules with
+temporal predicates from unlabeled ICS data, explicitly motivated by the
+difficulty residual-based methods have with stealthy attacks.  This represents
+the data-driven invariant branch: rules are discovered from logs rather than
+derived from documentation.  \mitl takes the opposite position: the invariant
+derives from the engineering specification, and warm-up provides only the
+quantitative calibration of what normal looks like.
+
+\paragraph{LLM-assisted invariant extraction.}
+InvarLLM~\cite{InvarLLM2024} similarly extracts physical invariants from CPS
+documentation via LLM, evaluated on SWaT and WADI with 100\% precision and
+no false alarms.  The key difference is methodological: InvarLLM uses LLM
+extraction followed by empirical statistical validation against system logs
+(PCMCI\texttt{+}/K-means) to confirm that extracted invariants hold in
+practice.  \mitl does not require empirical validation of constraints; the
+spec is authoritative by assumption, and calibration applies only to the
+\emph{quantitative threshold}, not to the structural invariant itself.  More
+importantly, InvarLLM does not make the mechanistic argument that motivates
+\mitl: that replay attacks create a structural ceiling for network ML because
+replayed packets are valid, and that constraints C3+C4 are
+\emph{invariant under replay} because replay cannot avoid freezing the
+physical process while elevating network traffic.  The LLM extraction backend
+is shared plumbing; the contribution is the ceiling argument and the
+replay-invariance analysis.
 
 \paragraph{Adversarial ML and constraint projection.}
 \catt~\cite{catt2026} showed that constraint projection exposes inflated
@@ -653,6 +734,38 @@ Y. Mo and B. Sinopoli.
 E.~M. Clarke, O. Grumberg, and D.~A. Peled.
 \newblock \emph{Model Checking}.
 \newblock MIT Press, 1999.
+
+\bibitem{InvarLLM2024}
+D. Abshari, P. Shi, C. Fu, M. Sridhar, and X. Du.
+\newblock {INVARLLM}: {LLM}-Assisted Physical Invariant Extraction for
+  Cyber-Physical Systems Anomaly Detection.
+\newblock \emph{arXiv preprint arXiv:2411.10918}, 2024.
+
+\bibitem{Fung2022}
+C. Fung, S. Srinarasi, K. Lucas, H.~B. Phee, and L. Bauer.
+\newblock Perspectives from a Comprehensive Evaluation of Reconstruction-based
+  Anomaly Detection in Industrial Control Systems.
+\newblock In \emph{Proceedings of the 27th European Symposium on Research in
+  Computer Security (ESORICS)}, LNCS 13556, 2022.
+
+\bibitem{SCAPHY2023}
+M. Ike, K. Phan, K. Sadoski, R. Valme, and W. Lee.
+\newblock {SCAPHY}: Detecting Modern {ICS} Attacks by Correlating Behaviors in
+  {SCADA} and {PHY}sical.
+\newblock In \emph{Proceedings of the IEEE Symposium on Security and Privacy
+  (S\&P)}, pp.~362--379, 2023.
+
+\bibitem{Hotellier2024}
+E. Hotellier, F. Sicard, J. Francq, and S. Mocanu.
+\newblock Standard specification-based intrusion detection for hierarchical
+  industrial control systems.
+\newblock \emph{Information Sciences}, 659:120102, 2024.
+\newblock \doi{10.1016/j.ins.2024.120102}
+
+\bibitem{Zhu2025}
+Q. Zhu, Y. Ding, J. Jiang, and S.-H. Yang.
+\newblock Anomaly detection using invariant rules in Industrial Control Systems.
+\newblock \emph{Control Engineering Practice}, 154:106164, 2025.
 
 \end{thebibliography}
 

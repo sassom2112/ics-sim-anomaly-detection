@@ -616,6 +616,111 @@ csv_path = os.path.join(OUTPUT_DIR, "hai_comparison.csv")
 pd.DataFrame(comparison).to_csv(csv_path, index=False)
 log.info("  Comparison CSV → %s", csv_path)
 
+# ══════════════════════════════════════════════════════════════════════════════
+# §9  PER-PROCESS CONSTRAINT COVERAGE TABLE
+#
+# Rows  = attack stratum (by process: P1/P2/P3/P4/multi-process)
+# Cols  = C1 / C2 / C3 / C4 / Constraint-Invisible
+#
+# "Constraint-Invisible" is the publishable row: attack windows where no
+# constraint fires.  These are attacks that stay within spec bounds and produce
+# rate-limited, structurally consistent sensor readings — outside MITL's
+# detection envelope.  Knowing which attack classes are invisible is a finding,
+# not a gap: it scopes the claim accurately and motivates future constraint work.
+#
+# HAI 22.04 encodes per-process attack status in attack_P1/P2/P3/P4 columns.
+# DEMO mode has only a single `attack` column; falls back to one stratum.
+# ══════════════════════════════════════════════════════════════════════════════
+
+log.info("[8/8] Per-process constraint coverage table …")
+
+# Detect per-process columns
+PROC_ATK_COLS = [c for c in eval_df.columns if c in
+                 ("attack_P1", "attack_P2", "attack_P3", "attack_P4")]
+HAS_PROCESS_LABELS = len(PROC_ATK_COLS) > 0
+
+def _process_stratum(df: pd.DataFrame, bkt: int) -> str:
+    """Return which HAI process(es) are under attack in this window."""
+    sub = df[df["bucket"] == bkt]
+    if sub.empty:
+        return "unknown"
+    active = [pc.replace("attack_", "")
+              for pc in PROC_ATK_COLS
+              if (sub[pc].fillna(0) > 0).any()]
+    if len(active) == 0:
+        return "normal"
+    if len(active) == 1:
+        return active[0]
+    return "multi-process"
+
+# Build per-window record: bucket | y_true | C1..C4 | stratum
+window_records = []
+for r, yt in zip(results, y_true):
+    fired = {cid: int(any(v.constraint_id == cid for v in r.violations))
+             for cid in ["C1", "C2", "C3", "C4"]}
+    stratum = (_process_stratum(eval_df, r.bucket_ts) if HAS_PROCESS_LABELS
+               else ("attack" if yt else "normal"))
+    window_records.append({
+        "bucket_ts":  r.bucket_ts,
+        "y_true":     int(yt),
+        "stratum":    stratum,
+        "any_fired":  int(r.flagged),
+        **fired,
+    })
+
+win_df = pd.DataFrame(window_records)
+atk_df = win_df[win_df["y_true"] == 1].copy()
+
+if len(atk_df) > 0:
+    strata_order = sorted(
+        [s for s in atk_df["stratum"].unique() if s not in ("normal", "unknown")],
+        key=lambda s: (s.startswith("multi"), s),
+    )
+
+    table_rows = []
+    for stratum in strata_order:
+        sub = atk_df[atk_df["stratum"] == stratum]
+        n   = len(sub)
+        row = {"process": stratum, "n_atk_win": n}
+        for cid in ["C1", "C2", "C3", "C4"]:
+            row[f"{cid}_%"] = round(100.0 * sub[cid].mean(), 1)
+        row["invisible_%"] = round(100.0 * (1.0 - sub["any_fired"].mean()), 1)
+        table_rows.append(row)
+
+    # Summary row across all attack windows
+    n_all = len(atk_df)
+    summary = {"process": "ALL", "n_atk_win": n_all}
+    for cid in ["C1", "C2", "C3", "C4"]:
+        summary[f"{cid}_%"] = round(100.0 * atk_df[cid].mean(), 1)
+    summary["invisible_%"] = round(100.0 * (1.0 - atk_df["any_fired"].mean()), 1)
+    table_rows.append(summary)
+
+    prim_df = pd.DataFrame(table_rows)
+    prim_path = os.path.join(OUTPUT_DIR, "per_process_coverage.csv")
+    prim_df.to_csv(prim_path, index=False)
+
+    log.info("  %% of attack windows where each constraint fires (by process):")
+    log.info("  %-18s %8s %6s %6s %6s %6s %12s",
+             "Process", "n_win", "C1%", "C2%", "C3%", "C4%", "Invisible%")
+    log.info("  " + "-" * 68)
+    for _, row in prim_df.iterrows():
+        log.info("  %-18s %8d %6.1f %6.1f %6.1f %6.1f %12.1f",
+                 row["process"], row["n_atk_win"],
+                 row["C1_%"], row["C2_%"], row["C3_%"], row["C4_%"],
+                 row["invisible_%"])
+    log.info("  Saved → %s", prim_path)
+
+    if not DEMO_MODE and prim_df["invisible_%"].max() > 0:
+        n_invisible = int(round(
+            prim_df[prim_df["process"] == "ALL"]["invisible_%"].iloc[0]
+            * n_all / 100
+        ))
+        log.info("  NOTE: %d attack windows are constraint-invisible.", n_invisible)
+        log.info("  These attacks do not violate any manually-derived invariant —")
+        log.info("  a honest bound on MITL's coverage from one spec document.")
+else:
+    log.info("  No attack windows found — skipping coverage table.")
+
 log.info("")
 log.info("=" * 75)
 log.info("  Sprint 9 complete.")
