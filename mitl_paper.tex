@@ -18,6 +18,8 @@
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, backgrounds}
 \usepackage{amsmath}
+\usepackage{xspace}
+\usepackage{url}
 
 %% -- Metadata ----------------------------------------------------------------
 \acmConference[AISec '27]{ACM Workshop on Artificial Intelligence and Security}{%
@@ -108,7 +110,7 @@ position while the real process continues.  The physical system diverges from
 the controller's model of it.  A tank that should be draining does not drain;
 a tank that should be filling overflows.  The network classifier sees nothing
 wrong.  Our best supervised model (LightGBM on 48 network features) achieves
-49.9\% replay recall — effectively random~\cite{sprints2026}.
+49.9\% replay recall — effectively random~\cite{ICSSim2022}.
 
 This paper addresses a question that follows directly from this ceiling:
 \emph{if you cannot add signal intelligence, what can you add?}  Our answer
@@ -202,9 +204,9 @@ segment overlaps $[\text{event\_start} - \delta, \text{event\_end}]$.
 \centering
 \begin{tikzpicture}[
   box/.style  = {draw, rounded corners=3pt, minimum width=2.8cm,
-                 minimum height=0.9cm, text centered, font=\small},
+                 minimum height=0.9cm, align=center, font=\small},
   arrow/.style = {-Stealth, thick},
-  label/.style = {font=\scriptsize\itshape},
+  label/.style = {font=\scriptsize\itshape, align=center},
   every node/.style = {font=\small},
 ]
 
