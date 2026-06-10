@@ -885,7 +885,15 @@ Four constraints, each with page/figure attribution from the manual:
 
 C3 is the HAI equivalent of the ICSSim valve-stasis invariant: the manual explicitly states *"PID controller to maintain SIT01 as close as possible to AutoSD"* and attack AP27 precisely violates this.
 
-Run on Kaggle with the HAI dataset attached: `09_hai_mitl.py` auto-detects the data path and outputs eTaPR results to `outputs/hai_mitl/`.
+**Public reproducible run (real HAI 22.04 data):**
+**→ [kaggle.com/code/mikesass/manual-in-the-loop-hypothesis](https://www.kaggle.com/code/mikesass/manual-in-the-loop-hypothesis)**
+
+| Method | eTaP | eTaR | eTaPR-F1 |
+|--------|------|------|----------|
+| Z-score (τ=5) | 0.846 | 1.000 | 0.916 |
+| **MITL-Calibrated** | **1.000** | **1.000** | **1.000** |
+
+58 attack events · 361,200 test rows · 6,024 windows · zero attack labels used.
 
 ---
 
